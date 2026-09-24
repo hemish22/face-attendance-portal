@@ -130,6 +130,17 @@ def _recluster_unknowns(db: Session, event_id: str) -> None:
         .filter(UnknownCluster.event_id == event_id, UnknownCluster.dismissed.is_(False))
         .all()
     )
+    # A cluster can be left empty after a rematch un-clusters faces that now
+    # match a member. Drop those rows (they have no faces to join) before
+    # computing centroids — an empty centroid is NaN.
+    kept_clusters = []
+    for cluster in existing_clusters:
+        face_count = db.query(Face).filter(Face.cluster_id == cluster.id).count()
+        if face_count == 0:
+            db.delete(cluster)
+        else:
+            kept_clusters.append(cluster)
+    existing_clusters = kept_clusters
     existing_ids = [c.id for c in existing_clusters]
     existing_centroids = np.array([_cluster_centroid(db, c.id) for c in existing_clusters]) if existing_clusters else np.zeros((0, 512))
 
@@ -155,6 +166,8 @@ def _recluster_unknowns(db: Session, event_id: str) -> None:
 
 def _cluster_centroid(db: Session, cluster_id: str) -> np.ndarray:
     faces = db.query(Face).filter(Face.cluster_id == cluster_id).all()
+    if not faces:
+        return np.zeros(512, dtype=np.float32)
     embeddings = np.array([bytes_to_embedding(f.embedding) for f in faces])
     centroid = embeddings.mean(axis=0)
     return centroid / np.linalg.norm(centroid)
