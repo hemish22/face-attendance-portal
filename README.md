@@ -2,6 +2,8 @@
 
 Upload event photos, get back attendance per person (who's in which photos), unidentified-face clusters for strangers, a human review queue, and JSON/Excel exports. See `attendance-portal-build-spec.md` (in the parent directory) for the full spec.
 
+![Attendance portal](docs/attendance-dashboard.png)
+
 ## Status
 
 - **M0-M2 (core pipeline + API):** done. `api/core/` (detection, quality gate, matching, clustering) has 17 passing pytest tests. The full FastAPI backend (auth, members, events, processing, review, clusters, export) is built and verified end-to-end.
