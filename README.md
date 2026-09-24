@@ -32,6 +32,28 @@ Regenerate API types after backend schema changes:
 cd web && npx openapi-typescript http://localhost:8000/openapi.json -o src/lib/api-types.ts
 ```
 
+## Re-enrolling members from original photos (fix detection)
+
+If members were enrolled from AI-enhanced website photos, matching against raw
+event photos can miss people. Rebuild the reference set from original photos:
+
+1. Copy each good-quality original photo into one folder (e.g. `photos2`).
+2. Name every file by the person in it — roll no (`HEMISH_JAIN.jpg`), full
+   name (`hemish_jain.jpg`) or just a unique first name (`hemish.jpg`,
+   `hemish_1.jpg` for multiple photos). Names are matched against the `members`
+   table; ambiguous or unmapped files are reported and skipped.
+3. Preview the mapping, then re-enroll and re-match both events:
+
+```bash
+cd api && source .venv/bin/activate
+python -m scripts.re_enroll --src ../../photos2 --dry-run   # preview, no changes
+python -m scripts.re_enroll --src ../../photos2 --rematch   # replace refs + rematch events
+```
+
+Old website refs are deleted per member and replaced via the normal enrollment
+quality gate; members whose new photos get rejected (or who have no photos in
+the folder) are listed at the end.
+
 ## Tests
 
 ```bash
