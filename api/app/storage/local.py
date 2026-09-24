@@ -1,0 +1,32 @@
+from pathlib import Path
+
+from app.storage.base import Storage
+from app.storage.signing import make_signed_path
+
+
+class LocalStorage(Storage):
+    def __init__(self, root: str):
+        self.root = Path(root)
+        self.root.mkdir(parents=True, exist_ok=True)
+
+    def _path(self, key: str) -> Path:
+        path = self.root / key
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def save(self, key: str, data: bytes) -> None:
+        self._path(key).write_bytes(data)
+
+    def read(self, key: str) -> bytes:
+        return self._path(key).read_bytes()
+
+    def delete(self, key: str) -> None:
+        path = self._path(key)
+        if path.exists():
+            path.unlink()
+
+    def exists(self, key: str) -> bool:
+        return self._path(key).exists()
+
+    def url(self, key: str, ttl: int) -> str:
+        return make_signed_path(key, ttl)
